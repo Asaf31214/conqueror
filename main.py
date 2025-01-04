@@ -106,6 +106,10 @@ class Tile:
         return False
 
 
+    def __str__(self):
+        return f"{self._team} ({self._x}, {self._y})"
+
+
 class Board:
     def __init__(self, grid_width: int, grid_height: int):
         self.grid_width = grid_width
@@ -133,10 +137,19 @@ class Board:
                 for x in range(self.grid_width)
                 for y in range(self.grid_height)
                 if self.tiles[x][y].get_team() == team])
+    
+    
+def get_turn():
+    return Team.Player1 if turn else Team.Player2
+
+def switch_turn():
+    global turn
+    turn = not turn
 
 
 def decide_winner(board: Board, attacker: Tile, attacked: Tile):
     if attacker.first_attack():
+        print(f'{attacker} wins the first attack!')
         return True
     attacker_team_power = board.get_team_power(attacker)
     attacked_team_power = board.get_team_power(attacked)
@@ -146,9 +159,13 @@ def decide_winner(board: Board, attacker: Tile, attacked: Tile):
 
     attacker_chance = attacker_team_power * attacker_hp
     attacked_chance = attacked_team_power * attacked_hp
-    print(attacker_chance, attacked_chance)
-
-    return random.uniform(0, attacker_chance + attacked_chance) < attacker_chance
+    winner = random.uniform(0, attacker_chance + attacked_chance) < attacker_chance
+    print(f'{attacker} net power: {attacker_chance}, {attacked} net power: {attacked_chance}')
+    if winner:
+        print(f'{attacker} wins with {attacker_chance/(attacker_chance+attacked_chance)*100:.2f}% chance!')
+    else:
+        print(f'{attacked} wins with {attacked_chance/(attacker_chance+attacked_chance)*100:.2f}% chance!')
+    return winner
 
 
 # MAIN EVENT HANDLER
@@ -175,12 +192,15 @@ async def handle_click(event: pygame.event, board: Board, window: pygame.Surface
         await asyncio.sleep(0.6)
         attacker = click_queue.get()
         attacked = click_queue.get()
+        if get_turn() != attacker.get_team():
+            print('Not your turn!')
+            return
         success = decide_winner(board, attacker, attacked)
         if not success:
             attacker, attacked = attacked, attacker
         if is_adjacent(attacker, attacked):
             attacked.receive_attack(attacker=attacker)
-
+            switch_turn()
 
 
 # DISPLAY RENDERER
@@ -222,11 +242,12 @@ def draw_selections(window: pygame.Surface):
         )
 
 running: bool = True
+turn = True
 click_queue: Queue[Tile] = Queue(maxsize=2)
 
 async def main():
     pygame.init()
-    window = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+    window = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT + 100))
     board = Board(GRID_WIDTH, GRID_HEIGHT)
 
     player_1_base = Tile(0, 0, Team.Player1)
