@@ -1,5 +1,4 @@
 import pygame
-import sys
 import asyncio
 
 WINDOW_WIDTH, WINDOW_HEIGHT = 600, 600
@@ -13,10 +12,10 @@ GRID_HEIGHT = WINDOW_HEIGHT // TILE_SIZE
 
 
 class Tile:
-    def __init__(self, x: int, y: int):
+    def __init__(self, x: int, y: int, is_flipped: bool = False):
         self.x = x
         self.y = y
-        self.is_flipped = False
+        self.is_flipped = is_flipped
 
 
 class Board:
@@ -25,10 +24,10 @@ class Board:
         self.grid_height = grid_height
         self.tiles = [[Tile(x, y) for y in range(grid_height)] for x in range(grid_width)]
 
-    def set_tile(self, x, y, tile):
+    def set_tile(self, x: int, y: int, tile: Tile) -> None:
         self.tiles[x][y] = tile
 
-    def get_tile(self, x, y):
+    def get_tile(self, x: int, y: int) -> Tile:
         return self.tiles[x][y]
 
 
@@ -54,7 +53,7 @@ async def handle_click(event: pygame.event.Event, clicked_tiles: list[tuple[int,
 
 
 # DISPLAY RENDERER
-def render(pygame: pygame, window: pygame.Surface, clicked_tiles: list[tuple[int, int]]):
+def render(window: pygame.Surface, clicked_tiles: list[tuple[int, int]]):
     window.fill(WHITE)
     for x in range(0, WINDOW_WIDTH, TILE_SIZE):
         pygame.draw.line(window, GRID_COLOR, (x, 0), (x, WINDOW_HEIGHT))
@@ -69,6 +68,7 @@ def render(pygame: pygame, window: pygame.Surface, clicked_tiles: list[tuple[int
         )
     pygame.display.flip()
 
+
 running: bool = True
 
 
@@ -76,9 +76,9 @@ async def main():
     # Game initiation
     pygame.init()
     window = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
-    pygame.display.set_caption("Conqueror")
-
     board = Board(GRID_WIDTH, GRID_HEIGHT)
+
+    pygame.display.set_caption("Conqueror")
 
     clicked_tiles = []
     global running
@@ -87,7 +87,8 @@ async def main():
         events = pygame.event.get()
         tasks = [asyncio.create_task(event_handler(event, clicked_tiles)) for event in events]
         await asyncio.gather(*tasks)
-        render(pygame, window, clicked_tiles)
+
+        render(window, clicked_tiles)
 
     pygame.quit()
 
