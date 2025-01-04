@@ -32,24 +32,27 @@ DAMAGE_MODIFIERS = {("Player1", "Bot"): 1.0,
                     ("Player1", "Player1"): 0.0,
                     ("Player2", "Player2"): 0.0,
                     ("Player1", "Player2"): 2.0,
-                    ("Player2", "Player1"): 2.0,}
+                    ("Player2", "Player1"): 2.0, }
+
 
 @dataclass
 class Team:
-    Player1= "Player1"
-    Player2= "Player2"
-    Bot= "Bot"
+    Player1 = "Player1"
+    Player2 = "Player2"
+    Bot = "Bot"
+
 
 MAX_HP = 80
 
 
 def get_rect(tile_x: int, tile_y: int, scale: float = 1.0) -> tuple:
-    offset_x = TILE_SIZE * (1-scale) / 2
-    offset_y = TILE_SIZE * (1-scale) / 2
+    offset_x = TILE_SIZE * (1 - scale) / 2
+    offset_y = TILE_SIZE * (1 - scale) / 2
     return (tile_x * TILE_SIZE + offset_x,
             tile_y * TILE_SIZE + offset_y,
             TILE_SIZE * scale,
             TILE_SIZE * scale)
+
 
 def is_adjacent(tile_1: "Tile", tile_2: "Tile") -> bool:
     tile_1_x, tile_1_y = tile_1.get_coords()
@@ -97,14 +100,12 @@ class Tile:
         if self._hp == 0:
             self.switch_team(attacker._team)
 
-
     def first_attack(self):
         if self._team != Team.Bot:
             if not self._has_attacked:
                 self._has_attacked = True
                 return True
         return False
-
 
     def __str__(self):
         return f"{self._team} ({self._x}, {self._y})"
@@ -128,19 +129,21 @@ class Board:
         team = tile.get_team()
         if team == Team.Bot:
             x, y = tile.get_coords()
-            x_to_center, y_to_center = (abs(x - (GRID_WIDTH-1) / 2),abs(y - (GRID_HEIGHT-1) / 2))
+            x_to_center, y_to_center = (
+            abs(x - (GRID_WIDTH - 1) / 2), abs(y - (GRID_HEIGHT - 1) / 2))
             if x_to_center > 2 and y_to_center > 2:
                 return 1
             else:
                 return 2
         return len([self.tiles[x][y]
-                for x in range(self.grid_width)
-                for y in range(self.grid_height)
-                if self.tiles[x][y].get_team() == team])
-    
-    
+                    for x in range(self.grid_width)
+                    for y in range(self.grid_height)
+                    if self.tiles[x][y].get_team() == team])
+
+
 def get_turn():
     return Team.Player1 if turn else Team.Player2
+
 
 def switch_turn():
     global turn
@@ -162,9 +165,11 @@ def decide_winner(board: Board, attacker: Tile, attacked: Tile):
     winner = random.uniform(0, attacker_chance + attacked_chance) < attacker_chance
     print(f'{attacker} net power: {attacker_chance}, {attacked} net power: {attacked_chance}')
     if winner:
-        print(f'{attacker} wins with {attacker_chance/(attacker_chance+attacked_chance)*100:.2f}% chance!')
+        print(
+            f'{attacker} wins with {attacker_chance / (attacker_chance + attacked_chance) * 100:.2f}% chance!')
     else:
-        print(f'{attacked} wins with {attacked_chance/(attacker_chance+attacked_chance)*100:.2f}% chance!')
+        print(
+            f'{attacked} wins with {attacked_chance / (attacker_chance + attacked_chance) * 100:.2f}% chance!')
     return winner
 
 
@@ -184,6 +189,8 @@ async def handle_quit():
 
 async def handle_click(event: pygame.event, board: Board, window: pygame.Surface):
     mouse_x, mouse_y = event.pos
+    if mouse_x > WINDOW_WIDTH or mouse_y > WINDOW_HEIGHT:
+        return
     tile_x, tile_y = mouse_x // TILE_SIZE, mouse_y // TILE_SIZE
     tile = board.get_tile(tile_x, tile_y)
     click_queue.put(tile)
@@ -231,6 +238,7 @@ def draw_tiles(window: pygame.Surface, board: Board):
                 rect=get_rect(tile_x, tile_y, scale),
             )
 
+
 def draw_selections(window: pygame.Surface):
     selected_tiles = list(click_queue.queue)
     for tile in selected_tiles:
@@ -241,9 +249,11 @@ def draw_selections(window: pygame.Surface):
             width=5
         )
 
+
 running: bool = True
 turn = True
 click_queue: Queue[Tile] = Queue(maxsize=2)
+
 
 async def main():
     pygame.init()
@@ -251,9 +261,9 @@ async def main():
     board = Board(GRID_WIDTH, GRID_HEIGHT)
 
     player_1_base = Tile(0, 0, Team.Player1)
-    player_2_base = Tile(GRID_WIDTH-1, GRID_HEIGHT-1, Team.Player2)
+    player_2_base = Tile(GRID_WIDTH - 1, GRID_HEIGHT - 1, Team.Player2)
     board.set_tile(0, 0, player_1_base)
-    board.set_tile(GRID_WIDTH-1, GRID_HEIGHT-1, player_2_base)
+    board.set_tile(GRID_WIDTH - 1, GRID_HEIGHT - 1, player_2_base)
 
     pygame.display.set_caption("Conqueror")
 
@@ -263,7 +273,7 @@ async def main():
             *[asyncio.create_task(event_handler(event, board, window))
               for event in pygame.event.get()])
         render(window, board)
-        await asyncio.sleep(0.01) # 100 Tick rate
+        await asyncio.sleep(0.01)  # 100 Tick rate
     pygame.quit()
 
 
