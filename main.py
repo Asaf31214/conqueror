@@ -145,7 +145,7 @@ async def handle_click(event: pygame.event, board: Board, window: pygame.Surface
 def render(window: pygame.Surface, board: Board):
     window.fill(WHITE)
     draw_tiles(window, board)
-    draw_selections(window, board)
+    draw_selections(window)
     draw_lines(window)
     pygame.display.flip()
 
@@ -169,7 +169,7 @@ def draw_tiles(window: pygame.Surface, board: Board):
                 rect=get_rect(tile_x, tile_y, scale),
             )
 
-def draw_selections(window: pygame.Surface, board: Board):
+def draw_selections(window: pygame.Surface):
     selected_tiles = list(click_queue.queue)
     for tile in selected_tiles:
         pygame.draw.rect(
