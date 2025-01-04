@@ -70,7 +70,6 @@ class Tile:
         self._y = y
         self._hp: float = MAX_HP
         self._team: str = team
-        self._has_attacked: bool = False
 
     def get_coords(self):
         return self._x, self._y
@@ -104,8 +103,8 @@ class Tile:
 
     def first_attack(self):
         if self._team != Team.Bot:
-            if not self._has_attacked:
-                self._has_attacked = True
+            if not has_attacked[self._team]:
+                has_attacked[self._team] = True
                 return True
         return False
 
@@ -292,6 +291,7 @@ running: bool = True
 turn = True
 click_queue: Queue[Tile] = Queue(maxsize=2)
 message = 'Start the game! Player1 (Blue Team)\'s turn.'
+has_attacked = {"Player1": False, "Player2": False}
 
 
 async def main():
