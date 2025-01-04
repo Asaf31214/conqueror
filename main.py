@@ -6,6 +6,8 @@ WINDOW_WIDTH, WINDOW_HEIGHT = 600, 600
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
+GREEN = (0, 255, 0)
+BLUE = (0, 0, 255)
 GRID_COLOR = (200, 200, 200)
 
 TILE_SIZE = 60
@@ -16,18 +18,23 @@ x_borders = range(0, WINDOW_WIDTH, TILE_SIZE)
 y_borders = range(0, WINDOW_HEIGHT, TILE_SIZE)
 
 
-def get_rect(tile_x: int, tile_y: int) -> tuple:
-    return tile_x * TILE_SIZE, tile_y * TILE_SIZE, TILE_SIZE, TILE_SIZE
+def get_rect(tile_x: int, tile_y: int, scale: float = 1.0) -> tuple:
+    offset_x = TILE_SIZE * (1-scale) / 2
+    offset_y = TILE_SIZE * (1-scale) / 2
+    return (tile_x * TILE_SIZE + offset_x,
+            tile_y * TILE_SIZE + offset_y,
+            TILE_SIZE * scale,
+            TILE_SIZE * scale)
 
 
 class Tile:
-    def __init__(self, x: int, y: int, is_flipped: bool = False):
+    def __init__(self, x: int, y: int):
         self.x = x
         self.y = y
-        self.is_flipped = is_flipped
+        self.hp: float = 100
 
-    def flip(self):
-        self.is_flipped = not self.is_flipped
+    def get_coords(self):
+        return self.x, self.y
 
 
 class Board:
@@ -62,14 +69,14 @@ async def handle_quit():
 async def handle_click(event: pygame.event, board: Board):
     mouse_x, mouse_y = event.pos
     tile_x, tile_y = mouse_x // TILE_SIZE, mouse_y // TILE_SIZE
-    board.get_tile(tile_x, tile_y).flip()
+    pass
 
 
 # DISPLAY RENDERER
 def render(window: pygame.Surface, board: Board):
     window.fill(WHITE)
+    draw_tiles(window, board)
     draw_lines(window)
-    draw_flips(window, board)
     pygame.display.flip()
 
 
@@ -80,15 +87,17 @@ def draw_lines(window: pygame.Surface):
         pygame.draw.line(window, GRID_COLOR, (0, y), (WINDOW_WIDTH, y))
 
 
-def draw_flips(window: pygame.Surface, board: Board):
+def draw_tiles(window: pygame.Surface, board: Board):
     for tile_x in range(board.grid_width):
         for tile_y in range(board.grid_height):
-            if board.get_tile(tile_x, tile_y).is_flipped:
-                pygame.draw.rect(
-                    surface=window,
-                    color=RED,
-                    rect=get_rect(tile_x, tile_y)
-                )
+            tile = board.get_tile(tile_x, tile_y)
+            scale = tile.hp / 100
+            pygame.draw.rect(
+                surface=window,
+                color=GREEN,
+                rect=get_rect(tile_x, tile_y, scale),
+            )
+
 
 
 running: bool = True
