@@ -152,7 +152,7 @@ def switch_turn():
 
 def decide_winner(board: Board, attacker: Tile, attacked: Tile):
     if attacker.first_attack():
-        print(f'{attacker} wins the first attack!')
+        set_message(f'{attacker} wins the first attack!')
         return True
     attacker_team_power = board.get_team_power(attacker)
     attacked_team_power = board.get_team_power(attacked)
@@ -163,14 +163,22 @@ def decide_winner(board: Board, attacker: Tile, attacked: Tile):
     attacker_chance = attacker_team_power * attacker_hp
     attacked_chance = attacked_team_power * attacked_hp
     winner = random.uniform(0, attacker_chance + attacked_chance) < attacker_chance
-    print(f'{attacker} net power: {attacker_chance}, {attacked} net power: {attacked_chance}')
+    set_message(f'{attacker} net power: {attacker_chance}, {attacked} net power: {attacked_chance}')
     if winner:
-        print(
-            f'{attacker} wins with {attacker_chance / (attacker_chance + attacked_chance) * 100:.2f}% chance!')
+        set_message(
+            new_message=f'{attacker} wins with {attacker_chance / (attacker_chance + attacked_chance) * 100:.2f}% chance!', append=True)
     else:
-        print(
-            f'{attacked} wins with {attacked_chance / (attacker_chance + attacked_chance) * 100:.2f}% chance!')
+        set_message(
+            new_message=f'{attacked} wins with {attacked_chance / (attacker_chance + attacked_chance) * 100:.2f}% chance!', append=True)
     return winner
+
+def set_message(new_message: str, append: bool = False):
+    global message
+    if append:
+        message += f'\n{new_message}'
+    else:
+        message = new_message
+    return message
 
 
 # MAIN EVENT HANDLER
@@ -200,7 +208,7 @@ async def handle_click(event: pygame.event, board: Board, window: pygame.Surface
         attacker = click_queue.get()
         attacked = click_queue.get()
         if get_turn() != attacker.get_team():
-            print('Not your turn!')
+            set_message('Not your turn!')
             return
         success = decide_winner(board, attacker, attacked)
         if not success:
@@ -216,8 +224,13 @@ def render(window: pygame.Surface, board: Board):
     draw_tiles(window, board)
     draw_selections(window)
     draw_lines(window)
+    display_message(window)
     pygame.display.flip()
 
+def display_message(window: pygame.Surface):
+    font = pygame.font.SysFont('Comic Sans MS', 30)
+    text = font.render(message, True, BLACK)
+    window.blit(text, (WINDOW_WIDTH // 2 - text.get_width() // 2, WINDOW_HEIGHT + 10))
 
 def draw_lines(window: pygame.Surface):
     for x in x_borders:
@@ -253,6 +266,7 @@ def draw_selections(window: pygame.Surface):
 running: bool = True
 turn = True
 click_queue: Queue[Tile] = Queue(maxsize=2)
+message = 'Start the game! Player1 (Blue Team)\'s turn.'
 
 
 async def main():
