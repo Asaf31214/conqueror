@@ -4,8 +4,6 @@ import random
 import pygame
 import asyncio
 
-from queue import Queue
-
 WINDOW_WIDTH, WINDOW_HEIGHT = 600, 600
 
 WHITE = (255, 255, 255)
@@ -202,12 +200,12 @@ async def handle_click(event: pygame.event, board: Board, window: pygame.Surface
         return
     tile_x, tile_y = mouse_x // TILE_SIZE, mouse_y // TILE_SIZE
     tile = board.get_tile(tile_x, tile_y)
-    click_queue.put(tile)
-    if click_queue.full():
+    click_queue.append(tile)
+    if len(click_queue) == 2:
         render(window, board)
         await asyncio.sleep(0.6)
-        attacker = click_queue.get()
-        attacked = click_queue.get()
+        attacker, attacked = click_queue
+        click_queue.clear()
         if get_turn() != attacker.get_team():
             set_message('Not your turn!')
             return
@@ -277,8 +275,7 @@ def draw_tiles(window: pygame.Surface, board: Board):
 
 
 def draw_selections(window: pygame.Surface):
-    selected_tiles = list(click_queue.queue)
-    for tile in selected_tiles:
+    for tile in click_queue:
         pygame.draw.rect(
             surface=window,
             color=GREEN,
@@ -291,12 +288,11 @@ def draw_selections(window: pygame.Surface):
 # hucreler arasi heal atma
 # uste total guc gostergesi
 # ayni kareye art arda 2 kere tiklayinca unselect
-# queueyi liste cevir
 # game over
 
 running: bool = True
 turn = True
-click_queue: Queue[Tile] = Queue(maxsize=2)
+click_queue: list = []
 message = 'Start the game! Player1 (Blue Team)\'s turn.'
 has_attacked = {"Player1": False, "Player2": False}
 
