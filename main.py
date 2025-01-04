@@ -4,6 +4,7 @@ import asyncio
 WINDOW_WIDTH, WINDOW_HEIGHT = 600, 600
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
+RED = (255, 0, 0)
 GRID_COLOR = (200, 200, 200)
 
 TILE_SIZE = 60
@@ -34,13 +35,13 @@ class Board:
 # MAIN EVENT HANDLER
 async def event_handler(event: pygame.event.Event, clicked_tiles: list[tuple[int, int]]):
     if event.type == pygame.QUIT:
-        await handle_quit(event)
+        await handle_quit()
     elif event.type == pygame.MOUSEBUTTONDOWN:
         await handle_click(event, clicked_tiles)
 
 
 # Event handler functions
-async def handle_quit(event: pygame.event.Event):
+async def handle_quit():
     global running
     running = False
 
@@ -55,19 +56,20 @@ async def handle_click(event: pygame.event.Event, clicked_tiles: list[tuple[int,
 # DISPLAY RENDERER
 def render(window: pygame.Surface, clicked_tiles: list[tuple[int, int]]):
     window.fill(WHITE)
+    draw_lines(window)
+    for tile_x, tile_y in clicked_tiles:
+        pygame.draw.rect(
+            surface=window,
+            color=RED,
+            rect=(tile_x * TILE_SIZE, tile_y * TILE_SIZE, TILE_SIZE, TILE_SIZE)
+        )
+    pygame.display.flip()
+
+def draw_lines(window: pygame.Surface):
     for x in range(0, WINDOW_WIDTH, TILE_SIZE):
         pygame.draw.line(window, GRID_COLOR, (x, 0), (x, WINDOW_HEIGHT))
     for y in range(0, WINDOW_HEIGHT, TILE_SIZE):
         pygame.draw.line(window, GRID_COLOR, (0, y), (WINDOW_WIDTH, y))
-
-    for tile_x, tile_y in clicked_tiles:
-        pygame.draw.rect(
-            window,
-            (255, 0, 0),
-            (tile_x * TILE_SIZE, tile_y * TILE_SIZE, TILE_SIZE, TILE_SIZE)
-        )
-    pygame.display.flip()
-
 
 running: bool = True
 
@@ -83,7 +85,6 @@ async def main():
     clicked_tiles = []
     global running
     while running:
-        # Get the queued events and run them simultaneously
         events = pygame.event.get()
         tasks = [asyncio.create_task(event_handler(event, clicked_tiles)) for event in events]
         await asyncio.gather(*tasks)
