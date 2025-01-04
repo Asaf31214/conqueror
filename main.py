@@ -285,7 +285,14 @@ def draw_selections(window: pygame.Surface):
             rect=get_rect(*tile.get_coords()),
             width=5
         )
-
+# TODO invalid attackta print atma
+# En alta x's turn ekle
+# windows height arttir
+# hucreler arasi heal atma
+# uste total guc gostergesi
+# ayni kareye art arda 2 kere tiklayinca unselect
+# queueyi liste cevir
+# game over
 
 running: bool = True
 turn = True
@@ -296,7 +303,7 @@ has_attacked = {"Player1": False, "Player2": False}
 
 async def main():
     pygame.init()
-    window = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT + 100))
+    window = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT + 200))
     board = Board(GRID_WIDTH, GRID_HEIGHT)
 
     player_1_base = Tile(0, 0, Team.Player1)
