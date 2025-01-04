@@ -111,9 +111,15 @@ class Board:
     def get_tile(self, x: int, y: int) -> Tile:
         return self.tiles[x][y]
 
-    def get_team_power(self, team: str) -> int:
+    def get_team_power(self, tile: Tile) -> int:
+        team = tile.get_team()
         if team == Team.Bot:
-            return 1
+            x, y = tile.get_coords()
+            x_to_center, y_to_center = (abs(x - (GRID_WIDTH-1) / 2),abs(y - (GRID_HEIGHT-1) / 2))
+            if x_to_center > 2 and y_to_center > 2:
+                return 1
+            else:
+                return 2
         return len([self.tiles[x][y]
                 for x in range(self.grid_width)
                 for y in range(self.grid_height)
@@ -121,14 +127,15 @@ class Board:
 
 
 def decide_winner(board: Board, attacker: Tile, attacked: Tile):
-    attacker_team_power = board.get_team_power(attacker.get_team())
-    attacked_team_power = board.get_team_power(attacked.get_team())
+    attacker_team_power = board.get_team_power(attacker)
+    attacked_team_power = board.get_team_power(attacked)
 
     attacker_hp = attacker.get_hp()
     attacked_hp = attacked.get_hp()
 
     attacker_chance = attacker_team_power * attacker_hp
     attacked_chance = attacked_team_power * attacked_hp
+    print(attacker_chance, attacked_chance)
 
     return random.uniform(0, attacker_chance + attacked_chance) < attacker_chance
 
