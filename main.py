@@ -40,6 +40,11 @@ def get_rect(tile_x: int, tile_y: int, scale: float = 1.0) -> tuple:
             TILE_SIZE * scale,
             TILE_SIZE * scale)
 
+def is_adjacent(tile_1: "Tile", tile_2: "Tile") -> bool:
+    tile_1_x, tile_1_y = tile_1.get_coords()
+    tile_2_x, tile_2_y = tile_2.get_coords()
+    return abs(tile_1_x - tile_2_x) + abs(tile_1_y - tile_2_y) == 1
+
 
 class Tile:
     def __init__(self, x: int, y: int, team: str = Team.Bot):
@@ -109,7 +114,8 @@ async def handle_click(event: pygame.event, board: Board):
     if click_queue.full():
         attacker= click_queue.get()
         attacked= click_queue.get()
-        attacked.receive_attack(attacker=attacker)
+        if is_adjacent(attacker, attacked):
+            attacked.receive_attack(attacker=attacker)
 
 
 
