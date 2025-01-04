@@ -22,7 +22,7 @@ GRID_HEIGHT = WINDOW_HEIGHT // TILE_SIZE
 x_borders = range(0, WINDOW_WIDTH, TILE_SIZE)
 y_borders = range(0, WINDOW_HEIGHT, TILE_SIZE)
 
-TEAM_COLORS = {"Player1": BLUE, "Player2": RED, "Bot": GREEN}
+TEAM_COLORS = {"Player1": BLUE, "Player2": RED, "Bot": GRID_COLOR}
 
 DAMAGE_MODIFIERS = {("Player1", "Bot"): 1.0,
                     ("Player2", "Bot"): 1.0,
@@ -110,11 +110,11 @@ class Board:
 
 
 # MAIN EVENT HANDLER
-async def event_handler(event: pygame.event, board: Board):
+async def event_handler(event: pygame.event, board: Board, window: pygame.Surface):
     if event.type == pygame.QUIT:
         await handle_quit()
     elif event.type == pygame.MOUSEBUTTONDOWN:
-        await handle_click(event, board)
+        await handle_click(event, board, window)
 
 
 # Event handler functions
@@ -123,12 +123,14 @@ async def handle_quit():
     running = False
 
 
-async def handle_click(event: pygame.event, board: Board):
+async def handle_click(event: pygame.event, board: Board, window: pygame.Surface):
     mouse_x, mouse_y = event.pos
     tile_x, tile_y = mouse_x // TILE_SIZE, mouse_y // TILE_SIZE
     tile = board.get_tile(tile_x, tile_y)
     click_queue.put(tile)
     if click_queue.full():
+        render(window, board)
+        await asyncio.sleep(0.6)
         attacker = click_queue.get()
         attacked = click_queue.get()
         success = flip_coin()
@@ -143,6 +145,7 @@ async def handle_click(event: pygame.event, board: Board):
 def render(window: pygame.Surface, board: Board):
     window.fill(WHITE)
     draw_tiles(window, board)
+    draw_selections(window, board)
     draw_lines(window)
     pygame.display.flip()
 
@@ -166,7 +169,15 @@ def draw_tiles(window: pygame.Surface, board: Board):
                 rect=get_rect(tile_x, tile_y, scale),
             )
 
-
+def draw_selections(window: pygame.Surface, board: Board):
+    selected_tiles = list(click_queue.queue)
+    for tile in selected_tiles:
+        pygame.draw.rect(
+            surface=window,
+            color=GREEN,
+            rect=get_rect(*tile.get_coords()),
+            width=5
+        )
 
 running: bool = True
 click_queue: Queue[Tile] = Queue(maxsize=2)
@@ -186,9 +197,10 @@ async def main():
     global running
     while running:
         await asyncio.gather(
-            *[asyncio.create_task(event_handler(event, board))
+            *[asyncio.create_task(event_handler(event, board, window))
               for event in pygame.event.get()])
         render(window, board)
+        await asyncio.sleep(0.01) # 100 Tick rate
     pygame.quit()
 
 
