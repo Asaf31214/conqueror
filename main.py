@@ -93,12 +93,14 @@ class Tile:
     def get_team(self):
         return self._team
 
-    def receive_attack(self, attacker: "Tile" = None):
+    def receive_attack(self, attacker: "Tile" = None) -> None:
         damage_modifier = DAMAGE_MODIFIERS[(attacker._team, self._team)]
         damage = (self._hp / 2) * damage_modifier
         self._set_hp(self._hp - damage)
         if self._hp == 0:
+            set_message(new_message=f'{attacker} captured {self}!', append=True)
             self.switch_team(attacker._team)
+
 
     def first_attack(self):
         if self._team != Team.Bot:
@@ -175,7 +177,7 @@ def decide_winner(board: Board, attacker: Tile, attacked: Tile):
 def set_message(new_message: str, append: bool = False):
     global message
     if append:
-        message += f'\n{new_message}'
+        message += '\n' + new_message
     else:
         message = new_message
     return message
@@ -227,10 +229,31 @@ def render(window: pygame.Surface, board: Board):
     display_message(window)
     pygame.display.flip()
 
-def display_message(window: pygame.Surface):
-    font = pygame.font.SysFont('Comic Sans MS', 30)
-    text = font.render(message, True, BLACK)
-    window.blit(text, (WINDOW_WIDTH // 2 - text.get_width() // 2, WINDOW_HEIGHT + 10))
+def display_message(window: pygame.Surface, font_size: int = 30):
+    font = pygame.font.SysFont('Comic Sans MS', font_size)
+    line_height = font.get_height()
+
+    manual_lines = message.split('\n')
+    lines = []
+    current_line = ""
+
+    for line in manual_lines:
+        words = line.split(' ')
+        for word in words:
+            if font.size(current_line + word + " ")[0] > WINDOW_WIDTH-40:
+                lines.append(current_line)
+                current_line = word + " "
+            else:
+                current_line += word + " "
+
+    lines.append(current_line)
+
+    for i, line in enumerate(lines):
+        text_surface = font.render(line.strip(), True, BLACK)
+        x_position = WINDOW_WIDTH // 2 - text_surface.get_width() // 2
+        y_position = WINDOW_HEIGHT + i * line_height
+        window.blit(text_surface, (x_position, y_position))
+
 
 def draw_lines(window: pygame.Surface):
     for x in x_borders:
