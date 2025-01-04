@@ -2,6 +2,7 @@ import pygame
 import asyncio
 
 WINDOW_WIDTH, WINDOW_HEIGHT = 600, 600
+
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
@@ -17,7 +18,8 @@ class Tile:
         self.x = x
         self.y = y
         self.is_flipped = is_flipped
-
+    def flip(self):
+        self.is_flipped = not self.is_flipped
 
 class Board:
     def __init__(self, grid_width: int, grid_height: int):
@@ -33,11 +35,11 @@ class Board:
 
 
 # MAIN EVENT HANDLER
-async def event_handler(event: pygame.event.Event, clicked_tiles: list[tuple[int, int]]):
+async def event_handler(event: pygame.event.Event, board: Board):
     if event.type == pygame.QUIT:
         await handle_quit()
     elif event.type == pygame.MOUSEBUTTONDOWN:
-        await handle_click(event, clicked_tiles)
+        await handle_click(event, board)
 
 
 # Event handler functions
@@ -46,23 +48,17 @@ async def handle_quit():
     running = False
 
 
-async def handle_click(event: pygame.event.Event, clicked_tiles: list[tuple[int, int]]):
+async def handle_click(event: pygame.event.Event, board: Board):
     mouse_x, mouse_y = event.pos
     tile_x, tile_y = mouse_x // TILE_SIZE, mouse_y // TILE_SIZE
-    if (tile_x, tile_y) not in clicked_tiles:
-        clicked_tiles.append((tile_x, tile_y))
+    board.get_tile(tile_x, tile_y).flip()
 
 
 # DISPLAY RENDERER
-def render(window: pygame.Surface, clicked_tiles: list[tuple[int, int]]):
+def render(window: pygame.Surface, board: Board):
     window.fill(WHITE)
     draw_lines(window)
-    for tile_x, tile_y in clicked_tiles:
-        pygame.draw.rect(
-            surface=window,
-            color=RED,
-            rect=(tile_x * TILE_SIZE, tile_y * TILE_SIZE, TILE_SIZE, TILE_SIZE)
-        )
+    draw_flips(window, board)
     pygame.display.flip()
 
 def draw_lines(window: pygame.Surface):
@@ -70,6 +66,16 @@ def draw_lines(window: pygame.Surface):
         pygame.draw.line(window, GRID_COLOR, (x, 0), (x, WINDOW_HEIGHT))
     for y in range(0, WINDOW_HEIGHT, TILE_SIZE):
         pygame.draw.line(window, GRID_COLOR, (0, y), (WINDOW_WIDTH, y))
+
+def draw_flips(window: pygame.Surface, board: Board):
+    for tile_x in range(board.grid_width):
+        for tile_y in range(board.grid_height):
+            if board.get_tile(tile_x, tile_y).is_flipped:
+                pygame.draw.rect(
+                    surface=window,
+                    color=RED,
+                    rect=(tile_x * TILE_SIZE, tile_y * TILE_SIZE, TILE_SIZE, TILE_SIZE)
+                )
 
 running: bool = True
 
@@ -82,14 +88,13 @@ async def main():
 
     pygame.display.set_caption("Conqueror")
 
-    clicked_tiles = []
     global running
     while running:
         events = pygame.event.get()
-        tasks = [asyncio.create_task(event_handler(event, clicked_tiles)) for event in events]
+        tasks = [asyncio.create_task(event_handler(event, board)) for event in events]
         await asyncio.gather(*tasks)
 
-        render(window, clicked_tiles)
+        render(window, board)
 
     pygame.quit()
 
