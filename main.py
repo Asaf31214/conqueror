@@ -86,6 +86,9 @@ class Tile:
         self._hp = MAX_HP
         self._team = team
 
+    def get_team(self):
+        return self._team
+
     def receive_attack(self, attacker: "Tile" = None):
         damage_modifier = DAMAGE_MODIFIERS[(attacker._team, self._team)]
         damage = (self._hp / 2) * damage_modifier
@@ -107,6 +110,27 @@ class Board:
 
     def get_tile(self, x: int, y: int) -> Tile:
         return self.tiles[x][y]
+
+    def get_team_power(self, team: str) -> int:
+        if team == Team.Bot:
+            return 1
+        return len([self.tiles[x][y]
+                for x in range(self.grid_width)
+                for y in range(self.grid_height)
+                if self.tiles[x][y].get_team() == team])
+
+
+def decide_winner(board: Board, attacker: Tile, attacked: Tile):
+    attacker_team_power = board.get_team_power(attacker.get_team())
+    attacked_team_power = board.get_team_power(attacked.get_team())
+
+    attacker_hp = attacker.get_hp()
+    attacked_hp = attacked.get_hp()
+
+    attacker_chance = attacker_team_power * attacker_hp
+    attacked_chance = attacked_team_power * attacked_hp
+
+    return random.uniform(0, attacker_chance + attacked_chance) < attacker_chance
 
 
 # MAIN EVENT HANDLER
@@ -133,7 +157,7 @@ async def handle_click(event: pygame.event, board: Board, window: pygame.Surface
         await asyncio.sleep(0.6)
         attacker = click_queue.get()
         attacked = click_queue.get()
-        success = flip_coin()
+        success = decide_winner(board, attacker, attacked)
         if not success:
             attacker, attacked = attacked, attacker
         if is_adjacent(attacker, attacked):
