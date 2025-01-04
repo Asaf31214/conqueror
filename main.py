@@ -203,12 +203,14 @@ async def handle_click(event: pygame.event, board: Board, window: pygame.Surface
     click_queue.append(tile)
     if len(click_queue) == 2:
         render(window, board)
-        await asyncio.sleep(0.6)
         attacker, attacked = click_queue
         click_queue.clear()
+        if attacker == attacked:
+            return
         if get_turn() != attacker.get_team():
             set_message('Not your turn!')
             return
+        await asyncio.sleep(0.6)
         success = decide_winner(board, attacker, attacked)
         if not success:
             attacker, attacked = attacked, attacker
@@ -284,10 +286,8 @@ def draw_selections(window: pygame.Surface):
         )
 # TODO invalid attackta print atma
 # En alta x's turn ekle
-# windows height arttir
 # hucreler arasi heal atma
 # uste total guc gostergesi
-# ayni kareye art arda 2 kere tiklayinca unselect
 # game over
 
 running: bool = True
