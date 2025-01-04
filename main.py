@@ -67,8 +67,10 @@ async def main():
     clicked_tiles = []
     global running
     while running:
+        tasks = []
         for event in pygame.event.get():
-            await event_handler(event, clicked_tiles)
+            tasks.append(asyncio.create_task(event_handler(event, clicked_tiles)))
+        await asyncio.gather(*tasks)
 
         window.fill(WHITE)
 
