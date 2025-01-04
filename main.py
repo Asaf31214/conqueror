@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import random
 
 import pygame
 import asyncio
@@ -23,6 +24,16 @@ y_borders = range(0, WINDOW_HEIGHT, TILE_SIZE)
 
 TEAM_COLORS = {"Player1": BLUE, "Player2": RED, "Bot": GREEN}
 
+DAMAGE_MODIFIERS = {("Player1", "Bot"): 1.0,
+                    ("Player2", "Bot"): 1.0,
+                    ("Bot", "Player1"): 0.5,
+                    ("Bot", "Player2"): 0.5,
+                    ("Bot", "Bot"): 0.0,
+                    ("Player1", "Player1"): 0.0,
+                    ("Player2", "Player2"): 0.0,
+                    ("Player1", "Player2"): 2.0,
+                    ("Player2", "Player1"): 2.0,}
+
 @dataclass
 class Team:
     Player1= "Player1"
@@ -44,6 +55,10 @@ def is_adjacent(tile_1: "Tile", tile_2: "Tile") -> bool:
     tile_1_x, tile_1_y = tile_1.get_coords()
     tile_2_x, tile_2_y = tile_2.get_coords()
     return abs(tile_1_x - tile_2_x) + abs(tile_1_y - tile_2_y) == 1
+
+
+def flip_coin():
+    return random.choice([True, False])
 
 
 class Tile:
@@ -72,7 +87,9 @@ class Tile:
         self._team = team
 
     def receive_attack(self, attacker: "Tile" = None):
-        self._set_hp(self._hp / 2)
+        damage_modifier = DAMAGE_MODIFIERS[(attacker._team, self._team)]
+        damage = (self._hp / 2) * damage_modifier
+        self._set_hp(self._hp - damage)
         if self._hp == 0:
             self.switch_team(attacker._team)
 
@@ -112,8 +129,11 @@ async def handle_click(event: pygame.event, board: Board):
     tile = board.get_tile(tile_x, tile_y)
     click_queue.put(tile)
     if click_queue.full():
-        attacker= click_queue.get()
-        attacked= click_queue.get()
+        attacker = click_queue.get()
+        attacked = click_queue.get()
+        success = flip_coin()
+        if not success:
+            attacker, attacked = attacked, attacker
         if is_adjacent(attacker, attacked):
             attacked.receive_attack(attacker=attacker)
 
