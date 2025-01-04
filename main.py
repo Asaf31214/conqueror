@@ -59,13 +59,15 @@ class Tile:
 
     def _set_hp(self, hp: float):
         self._hp = max(0.0, min(hp, MAX_HP))
+        if self._hp <= 10:
+            self._hp = 0
 
     def switch_team(self, team: str):
         self._hp = MAX_HP
         self._team = team
 
     def receive_attack(self, attacker: "Tile" = None):
-        self._set_hp(self._hp - 10)
+        self._set_hp(self._hp / 2)
         if self._hp == 0:
             self.switch_team(attacker._team)
 
