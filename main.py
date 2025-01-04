@@ -177,7 +177,7 @@ def decide_winner(board: Board, attacker: Tile, attacked: Tile):
 def set_message(new_message: str, append: bool = False):
     global message
     if append:
-        message += '\n' + new_message
+        message += f'\n{new_message}'
     else:
         message = new_message
     return message
@@ -238,6 +238,8 @@ def display_message(window: pygame.Surface, font_size: int = 30):
     current_line = ""
 
     for line in manual_lines:
+        lines.append(current_line)
+        current_line = ""
         words = line.split(' ')
         for word in words:
             if font.size(current_line + word + " ")[0] > WINDOW_WIDTH-40:
