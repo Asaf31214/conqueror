@@ -210,11 +210,11 @@ async def handle_click(event: pygame.event, board: Board, window: pygame.Surface
         if get_turn() != attacker.get_team():
             set_message('Not your turn!')
             return
-        await asyncio.sleep(0.6)
-        success = decide_winner(board, attacker, attacked)
-        if not success:
-            attacker, attacked = attacked, attacker
         if is_adjacent(attacker, attacked):
+            await asyncio.sleep(0.5)
+            success = decide_winner(board, attacker, attacked)
+            if not success:
+                attacker, attacked = attacked, attacker
             attacked.receive_attack(attacker=attacker)
             switch_turn()
 
