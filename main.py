@@ -12,20 +12,31 @@ TILE_SIZE = 60
 GRID_WIDTH = WINDOW_WIDTH // TILE_SIZE
 GRID_HEIGHT = WINDOW_HEIGHT // TILE_SIZE
 
+x_borders = range(0, WINDOW_WIDTH, TILE_SIZE)
+y_borders = range(0, WINDOW_HEIGHT, TILE_SIZE)
+
+
+def get_rect(tile_x: int, tile_y: int) -> tuple:
+    return tile_x * TILE_SIZE, tile_y * TILE_SIZE, TILE_SIZE, TILE_SIZE
+
 
 class Tile:
     def __init__(self, x: int, y: int, is_flipped: bool = False):
         self.x = x
         self.y = y
         self.is_flipped = is_flipped
+
     def flip(self):
         self.is_flipped = not self.is_flipped
+
 
 class Board:
     def __init__(self, grid_width: int, grid_height: int):
         self.grid_width = grid_width
         self.grid_height = grid_height
-        self.tiles = [[Tile(x, y) for y in range(grid_height)] for x in range(grid_width)]
+        self.tiles = [[Tile(x, y)
+                       for y in range(grid_height)]
+                      for x in range(grid_width)]
 
     def set_tile(self, x: int, y: int, tile: Tile) -> None:
         self.tiles[x][y] = tile
@@ -35,7 +46,7 @@ class Board:
 
 
 # MAIN EVENT HANDLER
-async def event_handler(event: pygame.event.Event, board: Board):
+async def event_handler(event: pygame.event, board: Board):
     if event.type == pygame.QUIT:
         await handle_quit()
     elif event.type == pygame.MOUSEBUTTONDOWN:
@@ -48,7 +59,7 @@ async def handle_quit():
     running = False
 
 
-async def handle_click(event: pygame.event.Event, board: Board):
+async def handle_click(event: pygame.event, board: Board):
     mouse_x, mouse_y = event.pos
     tile_x, tile_y = mouse_x // TILE_SIZE, mouse_y // TILE_SIZE
     board.get_tile(tile_x, tile_y).flip()
@@ -61,11 +72,13 @@ def render(window: pygame.Surface, board: Board):
     draw_flips(window, board)
     pygame.display.flip()
 
+
 def draw_lines(window: pygame.Surface):
-    for x in range(0, WINDOW_WIDTH, TILE_SIZE):
+    for x in x_borders:
         pygame.draw.line(window, GRID_COLOR, (x, 0), (x, WINDOW_HEIGHT))
-    for y in range(0, WINDOW_HEIGHT, TILE_SIZE):
+    for y in y_borders:
         pygame.draw.line(window, GRID_COLOR, (0, y), (WINDOW_WIDTH, y))
+
 
 def draw_flips(window: pygame.Surface, board: Board):
     for tile_x in range(board.grid_width):
@@ -74,14 +87,14 @@ def draw_flips(window: pygame.Surface, board: Board):
                 pygame.draw.rect(
                     surface=window,
                     color=RED,
-                    rect=(tile_x * TILE_SIZE, tile_y * TILE_SIZE, TILE_SIZE, TILE_SIZE)
+                    rect=get_rect(tile_x, tile_y)
                 )
+
 
 running: bool = True
 
 
 async def main():
-    # Game initiation
     pygame.init()
     window = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
     board = Board(GRID_WIDTH, GRID_HEIGHT)
@@ -90,12 +103,10 @@ async def main():
 
     global running
     while running:
-        events = pygame.event.get()
-        tasks = [asyncio.create_task(event_handler(event, board)) for event in events]
-        await asyncio.gather(*tasks)
-
+        await asyncio.gather(
+            *[asyncio.create_task(event_handler(event, board))
+              for event in pygame.event.get()])
         render(window, board)
-
     pygame.quit()
 
 
