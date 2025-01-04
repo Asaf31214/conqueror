@@ -67,6 +67,7 @@ class Tile:
         self._y = y
         self._hp: float = MAX_HP
         self._team: str = team
+        self._has_attacked: bool = False
 
     def get_coords(self):
         return self._x, self._y
@@ -95,6 +96,14 @@ class Tile:
         self._set_hp(self._hp - damage)
         if self._hp == 0:
             self.switch_team(attacker._team)
+
+
+    def first_attack(self):
+        if self._team != Team.Bot:
+            if not self._has_attacked:
+                self._has_attacked = True
+                return True
+        return False
 
 
 class Board:
@@ -127,6 +136,8 @@ class Board:
 
 
 def decide_winner(board: Board, attacker: Tile, attacked: Tile):
+    if attacker.first_attack():
+        return True
     attacker_team_power = board.get_team_power(attacker)
     attacked_team_power = board.get_team_power(attacked)
 
