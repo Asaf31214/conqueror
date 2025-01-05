@@ -232,6 +232,12 @@ def display_message(window: pygame.Surface, font_size: int = 30):
     font = pygame.font.SysFont('Comic Sans MS', font_size)
     line_height = font.get_height()
 
+    turn_message = f"{Team.Player1 if turn else Team.Player2}'s turn"
+    text_surface = font.render(turn_message, True, BLACK)
+    x_position = 15
+    y_position = WINDOW_HEIGHT + 15
+    window.blit(text_surface, (x_position, y_position))
+
     manual_lines = message.split('\n')
     lines = []
     current_line = ""
@@ -241,7 +247,7 @@ def display_message(window: pygame.Surface, font_size: int = 30):
         current_line = ""
         words = line.split(' ')
         for word in words:
-            if font.size(current_line + word + " ")[0] > WINDOW_WIDTH-40:
+            if font.size(current_line + word + " ")[0] > WINDOW_WIDTH-20:
                 lines.append(current_line)
                 current_line = word + " "
             else:
@@ -252,7 +258,7 @@ def display_message(window: pygame.Surface, font_size: int = 30):
     for i, line in enumerate(lines):
         text_surface = font.render(line.strip(), True, BLACK)
         x_position = WINDOW_WIDTH // 2 - text_surface.get_width() // 2
-        y_position = WINDOW_HEIGHT + i * line_height
+        y_position = WINDOW_HEIGHT + 15 + (i+1) * line_height
         window.blit(text_surface, (x_position, y_position))
 
 
@@ -285,7 +291,6 @@ def draw_selections(window: pygame.Surface):
             width=5
         )
 # TODO invalid attackta print atma
-# En alta x's turn ekle
 # hucreler arasi heal atma
 # uste total guc gostergesi
 # game over
@@ -293,7 +298,7 @@ def draw_selections(window: pygame.Surface):
 running: bool = True
 turn = True
 click_queue: list = []
-message = 'Start the game! Player1 (Blue Team)\'s turn.'
+message = 'Start the game by clicking on two tiles! '
 has_attacked = {"Player1": False, "Player2": False}
 
 
