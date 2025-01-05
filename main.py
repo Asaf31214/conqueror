@@ -202,21 +202,23 @@ async def handle_click(event: pygame.event, board: Board, window: pygame.Surface
     tile = board.get_tile(tile_x, tile_y)
     click_queue.append(tile)
     if len(click_queue) == 2:
-        render(window, board)
         attacker, attacked = click_queue
-        click_queue.clear()
-        if attacker == attacked:
+        if attacker == attacked or attacker.get_team() == Team.Bot:
+            click_queue.clear()
             return
         if get_turn() != attacker.get_team():
+            click_queue.clear()
             set_message('Not your turn!')
             return
         if is_adjacent(attacker, attacked):
+            render(window, board)
             await asyncio.sleep(0.5)
             success = decide_winner(board, attacker, attacked)
             if not success:
                 attacker, attacked = attacked, attacker
             attacked.receive_attack(attacker=attacker)
             switch_turn()
+        click_queue.clear()
 
 
 # DISPLAY RENDERER
