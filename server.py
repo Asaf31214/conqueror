@@ -37,7 +37,7 @@ MAX_HP = 80
 
 
 def is_adjacent(tile_1: "Tile", tile_2: "Tile") -> bool:
-    attack_range = 2 if len(board.get_team_tiles(tile_1.get_team())) >= 35 else 1
+    attack_range = 2 if len(board.get_team_tiles(tile_1.get_team())) >= 40 else 1
     tile_1_x, tile_1_y = tile_1.get_coords()
     tile_2_x, tile_2_y = tile_2.get_coords()
     return abs(tile_1_x - tile_2_x) + abs(tile_1_y - tile_2_y) <= attack_range
@@ -117,9 +117,9 @@ class Board:
         player2_region = [(x, y) for x in range(GRID_WIDTH // 2, GRID_WIDTH) for y in
                           range(GRID_HEIGHT // 2, GRID_HEIGHT)]
         if tile.get_coords() in player1_region:
-            return 1.6 if tile.get_team() == Team.Player1 else 0.625
+            return 1.25 if tile.get_team() == Team.Player1 else 0.80
         if tile.get_coords() in player2_region:
-            return 1.6 if tile.get_team() == Team.Player2 else 0.625
+            return 1.25 if tile.get_team() == Team.Player2 else 0.80
         return 1.0
 
     def get_team_power(self, tile: Tile) -> float:
@@ -291,7 +291,7 @@ async def server():
         global turn
         return {"message": message, "turn": turn}
 
-    config = uvicorn.Config(app, host="127.0.0.1", port=8000)
+    config = uvicorn.Config(app, host="0.0.0.0", port=8000)
     server_ = uvicorn.Server(config)
 
     await server_.serve()
