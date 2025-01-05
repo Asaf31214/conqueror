@@ -3,6 +3,10 @@ import random
 
 import pygame
 import asyncio
+import pickle
+
+from fastapi import FastAPI, Request
+import uvicorn
 
 WINDOW_WIDTH, WINDOW_HEIGHT = 600, 600
 
@@ -351,6 +355,15 @@ click_queue: list = []
 message = 'Start the game by clicking on two tiles! '
 has_attacked = {"Player1": False, "Player2": False}
 
+server_events = []
+
+
+def get_events():
+    global server_events
+    events = server_events[:]
+    server_events.clear()
+    return events
+
 
 async def main():
     pygame.init()
@@ -374,5 +387,33 @@ async def main():
     pygame.quit()
 
 
+async def server():
+    app = FastAPI()
+
+    @app.post("/event")
+    async def receive_event(request: Request):
+        global server_events
+        data = await request.body()
+        event = pickle.loads(data)
+        server_events.append(event)
+        return {"message": "Event received"}
+
+    @app.get("/health_check")
+    async def health():
+        return {"message": "Health check successful"}
+
+    config = uvicorn.Config(app, host="127.0.0.1", port=8000)
+    server_ = uvicorn.Server(config)
+
+    await server_.serve()
+
+
+async def run():
+    await asyncio.gather(
+        main(),
+        server()
+    )
+
+
 if __name__ == "__main__":
-    asyncio.run(main())
+    asyncio.run(run())
