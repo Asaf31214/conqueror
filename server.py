@@ -11,12 +11,9 @@ import uvicorn
 
 WINDOW_WIDTH, WINDOW_HEIGHT = 600, 600
 
-
 TILE_SIZE = 60
 GRID_WIDTH = WINDOW_WIDTH // TILE_SIZE
 GRID_HEIGHT = WINDOW_HEIGHT // TILE_SIZE
-
-
 
 DAMAGE_MODIFIERS = {("Player1", "Bot"): 1.0,
                     ("Player2", "Bot"): 1.0,
@@ -46,7 +43,6 @@ def is_adjacent(tile_1: "Tile", tile_2: "Tile") -> bool:
     return abs(tile_1_x - tile_2_x) + abs(tile_1_y - tile_2_y) <= attack_range
 
 
-
 class Tile:
     def __init__(self, x: int, y: int, team: str = Team.Bot):
         self._x = x
@@ -56,7 +52,6 @@ class Tile:
 
     def get_coords(self):
         return self._x, self._y
-
 
     def get_hp(self):
         return self._hp
@@ -231,9 +226,6 @@ async def handle_click(event):
         click_queue.clear()
 
 
-
-
-running: bool = True
 turn = True
 click_queue: list = []
 message = 'Start the game by clicking on two tiles! '
@@ -248,7 +240,9 @@ def get_events():
     server_events.clear()
     return events
 
+
 board: Board
+
 
 async def main():
     pygame.init()
@@ -260,9 +254,7 @@ async def main():
     board.set_tile(0, 0, player_1_base)
     board.set_tile(GRID_WIDTH - 1, GRID_HEIGHT - 1, player_2_base)
 
-    pygame.display.set_caption("Conqueror")
-
-    global running
+    running = True
     while running:
         await asyncio.gather(
             *[asyncio.create_task(handle_click(event))
@@ -277,8 +269,7 @@ async def server():
     @app.post("/event")
     async def receive_event(request: Request):
         global server_events
-        data = await request.json()
-        event = data['mouse_pos']
+        event = await request.json()
         server_events.append(event)
         return
 

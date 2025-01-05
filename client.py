@@ -60,7 +60,6 @@ class Tile:
     def get_hp(self):
         return self._hp
 
-
     def get_team(self):
         return self._team
 
@@ -72,7 +71,6 @@ class Board:
         self.tiles = [[Tile(x, y)
                        for y in range(grid_height)]
                       for x in range(grid_width)]
-
 
     def get_tile(self, x: int, y: int) -> Tile:
         return self.tiles[x][y]
@@ -91,13 +89,14 @@ async def event_handler(event: pygame.event):
     elif event.type == pygame.MOUSEBUTTONDOWN:
         mouse_x, mouse_y = event.pos
         async with httpx.AsyncClient() as client:
-            await client.post("http://localhost:8000/event", json={'mouse_pos': [mouse_x, mouse_y]})
+            await client.post("http://localhost:8000/event", json=[mouse_x, mouse_y])
 
 
 # Event handler functions
 async def handle_quit():
     global running
     running = False
+
 
 # DISPLAY RENDERER
 def render(window: pygame.Surface):
@@ -197,6 +196,7 @@ async def get_board():
         global board
         board = pickle.loads(response.content)
 
+
 async def get_data():
     async with httpx.AsyncClient() as client:
         response = await client.get("http://localhost:8000/data")
@@ -206,11 +206,13 @@ async def get_data():
         message = data['message']
         turn = data['turn']
 
+
 async def get_queue():
     async with httpx.AsyncClient() as client:
         response = await client.get("http://localhost:8000/queue")
         global click_queue
         click_queue = pickle.loads(response.content)
+
 
 async def main():
     pygame.init()
