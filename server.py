@@ -11,21 +11,12 @@ import uvicorn
 
 WINDOW_WIDTH, WINDOW_HEIGHT = 600, 600
 
-WHITE = (255, 255, 255)
-BLACK = (0, 0, 0)
-RED = (255, 0, 0)
-GREEN = (0, 255, 0)
-BLUE = (0, 0, 255)
-GRID_COLOR = (200, 200, 200)
 
 TILE_SIZE = 60
 GRID_WIDTH = WINDOW_WIDTH // TILE_SIZE
 GRID_HEIGHT = WINDOW_HEIGHT // TILE_SIZE
 
-x_borders = range(0, WINDOW_WIDTH, TILE_SIZE)
-y_borders = range(0, WINDOW_HEIGHT, TILE_SIZE)
 
-TEAM_COLORS = {"Player1": BLUE, "Player2": RED, "Bot": GRID_COLOR}
 
 DAMAGE_MODIFIERS = {("Player1", "Bot"): 1.0,
                     ("Player2", "Bot"): 1.0,
@@ -66,8 +57,6 @@ class Tile:
     def get_coords(self):
         return self._x, self._y
 
-    def get_color(self):
-        return TEAM_COLORS[self._team]
 
     def get_hp(self):
         return self._hp
@@ -205,17 +194,6 @@ def set_message(new_message: str, append: bool = False):
     return message
 
 
-# MAIN EVENT HANDLER
-async def event_handler(event: pygame.event):
-    await handle_click(event)
-
-
-# Event handler functions
-async def handle_quit():
-    global running
-    running = False
-
-
 async def handle_click(event):
     if board.get_winner():
         set_message(f'Game over! Winner: {board.get_winner()}')
@@ -287,7 +265,7 @@ async def main():
     global running
     while running:
         await asyncio.gather(
-            *[asyncio.create_task(event_handler(event))
+            *[asyncio.create_task(handle_click(event))
               for event in get_events()])
         await asyncio.sleep(0.01)  # 100 Tick rate
     pygame.quit()
@@ -319,9 +297,8 @@ async def server():
     @app.get("/data")
     async def get_data():
         global message
-        global has_attacked
         global turn
-        return {"message": message, "turn": turn, "has_attacked": has_attacked}
+        return {"message": message, "turn": turn}
 
     config = uvicorn.Config(app, host="127.0.0.1", port=8000)
     server_ = uvicorn.Server(config)

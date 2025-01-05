@@ -24,16 +24,6 @@ y_borders = range(0, WINDOW_HEIGHT, TILE_SIZE)
 
 TEAM_COLORS = {"Player1": BLUE, "Player2": RED, "Bot": GRID_COLOR}
 
-DAMAGE_MODIFIERS = {("Player1", "Bot"): 1.0,
-                    ("Player2", "Bot"): 1.0,
-                    ("Bot", "Player1"): 0.5,
-                    ("Bot", "Player2"): 0.5,
-                    ("Bot", "Bot"): 0.0,
-                    ("Player1", "Player1"): 0.0,
-                    ("Player2", "Player2"): 0.0,
-                    ("Player1", "Player2"): 2.0,
-                    ("Player2", "Player1"): 2.0, }
-
 
 @dataclass
 class Team:
@@ -70,33 +60,9 @@ class Tile:
     def get_hp(self):
         return self._hp
 
-    def _set_hp(self, hp: float):
-        self._hp = max(0.0, min(hp, MAX_HP))
-        if self._hp <= 10:
-            self._hp = 0
-
-    def swap(self, other: "Tile"):
-        self._hp, other._hp = other._hp, self._hp
-
-    def switch_team(self, team: str):
-        self._hp = MAX_HP
-        self._team = team
 
     def get_team(self):
         return self._team
-
-    def receive_attack(self, attacker: "Tile" = None) -> str | None:
-        damage_modifier = DAMAGE_MODIFIERS[(attacker._team, self._team)]
-        damage = (self._hp / 2) * damage_modifier
-        self._set_hp(self._hp - damage)
-        if self._hp == 0:
-            capture_message = f'{attacker} captured {self}!'
-            self.switch_team(attacker._team)
-            return capture_message
-
-
-    def __str__(self):
-        return f"{self._team} ({self._x}, {self._y})"
 
 
 class Board:
@@ -107,8 +73,6 @@ class Board:
                        for y in range(grid_height)]
                       for x in range(grid_width)]
 
-    def set_tile(self, x: int, y: int, tile: Tile) -> None:
-        self.tiles[x][y] = tile
 
     def get_tile(self, x: int, y: int) -> Tile:
         return self.tiles[x][y]
@@ -118,39 +82,6 @@ class Board:
                 for x in range(self.grid_width)
                 for y in range(self.grid_height)
                 if self.tiles[x][y].get_team() == team]
-
-    @classmethod
-    def _attrition_modifier(cls, tile: Tile) -> float:
-        player1_region = [(x, y) for x in range(GRID_WIDTH // 2) for y in range(GRID_HEIGHT // 2)]
-        player2_region = [(x, y) for x in range(GRID_WIDTH // 2, GRID_WIDTH) for y in
-                          range(GRID_HEIGHT // 2, GRID_HEIGHT)]
-        if tile.get_coords() in player1_region:
-            return 1.6 if tile.get_team() == Team.Player1 else 0.625
-        if tile.get_coords() in player2_region:
-            return 1.6 if tile.get_team() == Team.Player2 else 0.625
-        return 1.0
-
-    def get_team_power(self, tile: Tile) -> float:
-        team = tile.get_team()
-        if team == Team.Bot:
-            x, y = tile.get_coords()
-            x_to_center, y_to_center = (
-                abs(x - (GRID_WIDTH - 1) / 2), abs(y - (GRID_HEIGHT - 1) / 2))
-            if x_to_center > 2 and y_to_center > 2:
-                return 1
-            elif x_to_center > 1 and y_to_center > 1:
-                return 2
-            else:
-                return 3
-        return len(self.get_team_tiles(team)) * self._attrition_modifier(tile)
-
-    def get_winner(self):
-        team_1_alive = any(self.get_team_tiles(Team.Player1))
-        team_2_alive = any(self.get_team_tiles(Team.Player2))
-        if team_1_alive and team_2_alive:
-            return None
-        else:
-            return Team.Player1 if team_1_alive else Team.Player2
 
 
 # MAIN EVENT HANDLER
@@ -256,7 +187,7 @@ running: bool = True
 turn = True
 click_queue: list = []
 message = 'Start the game by clicking on two tiles! '
-has_attacked = {"Player1": False, "Player2": False}
+
 board: Board
 
 
@@ -272,10 +203,8 @@ async def get_data():
         data = response.json()
         global message
         global turn
-        global has_attacked
         message = data['message']
         turn = data['turn']
-        has_attacked = data['has_attacked']
 
 async def get_queue():
     async with httpx.AsyncClient() as client:
@@ -286,14 +215,6 @@ async def get_queue():
 async def main():
     pygame.init()
     window = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT + 250))
-    global board
-    board = Board(GRID_WIDTH, GRID_HEIGHT)
-
-    player_1_base = Tile(0, 0, Team.Player1)
-    player_2_base = Tile(GRID_WIDTH - 1, GRID_HEIGHT - 1, Team.Player2)
-    board.set_tile(0, 0, player_1_base)
-    board.set_tile(GRID_WIDTH - 1, GRID_HEIGHT - 1, player_2_base)
-
     pygame.display.set_caption("Conqueror")
 
     global running
