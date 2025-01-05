@@ -252,19 +252,29 @@ def render(window: pygame.Surface, board: Board):
     draw_tiles(window, board)
     draw_selections(window)
     draw_lines(window)
-    display_message(window)
+    display_message(window, board)
     pygame.display.flip()
 
 
-def display_message(window: pygame.Surface, font_size: int = 30):
+def display_message(window: pygame.Surface, board: Board, font_size: int = 30):
     font = pygame.font.SysFont('Comic Sans MS', font_size)
     line_height = font.get_height()
 
-    turn_message = f"{Team.Player1 if turn else Team.Player2}'s turn"
+    turn_message = "Your Turn"
     text_surface = font.render(turn_message, True, BLACK)
-    x_position = 15
-    y_position = WINDOW_HEIGHT + 15
+    x_position = 16 if turn else WINDOW_WIDTH - 16 - text_surface.get_width()
+    y_position = WINDOW_HEIGHT + 2 * line_height
     window.blit(text_surface, (x_position, y_position))
+
+    player_1_score = len(board.get_team_tiles(Team.Player1))
+    player_2_score = len(board.get_team_tiles(Team.Player2))
+    text1_surface = font.render(f"{Team.Player1}: {player_1_score}", True, BLACK)
+    text2_surface = font.render(f"{Team.Player2}: {player_2_score}", True, BLACK)
+    y_position = WINDOW_HEIGHT + line_height
+    x_1_position = 16
+    x_2_position = WINDOW_WIDTH - 16 - text2_surface.get_width()
+    window.blit(text1_surface, (x_1_position, y_position))
+    window.blit(text2_surface, (x_2_position, y_position))
 
     manual_lines = message.split('\n')
     lines = []
@@ -285,8 +295,8 @@ def display_message(window: pygame.Surface, font_size: int = 30):
 
     for i, line in enumerate(lines):
         text_surface = font.render(line.strip(), True, BLACK)
-        x_position = WINDOW_WIDTH // 2 - text_surface.get_width() // 2
-        y_position = WINDOW_HEIGHT + 15 + (i + 1) * line_height
+        x_position = (WINDOW_WIDTH - 32) // 2 - text_surface.get_width() // 2
+        y_position = WINDOW_HEIGHT + (i + 4) * line_height
         window.blit(text_surface, (x_position, y_position))
 
 
@@ -320,9 +330,6 @@ def draw_selections(window: pygame.Surface):
         )
 
 
-# TODO
-# uste total guc gostergesi
-
 running: bool = True
 turn = True
 click_queue: list = []
@@ -332,7 +339,7 @@ has_attacked = {"Player1": False, "Player2": False}
 
 async def main():
     pygame.init()
-    window = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT + 200))
+    window = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT + 250))
     board = Board(GRID_WIDTH, GRID_HEIGHT)
 
     player_1_base = Tile(0, 0, Team.Player1)
