@@ -217,8 +217,8 @@ def set_message(new_message: str, append: bool = False):
 
 
 # MAIN EVENT HANDLER
-async def event_handler(event: pygame.event, board: Board, window: pygame.Surface):
-    await handle_click(event, board, window)
+async def event_handler(event: pygame.event, board: Board):
+    await handle_click(event, board)
 
 
 # Event handler functions
@@ -227,7 +227,7 @@ async def handle_quit():
     running = False
 
 
-async def handle_click(event, board: Board, window: pygame.Surface):
+async def handle_click(event, board: Board):
     if board.get_winner():
         set_message(f'Game over! Winner: {board.get_winner()}')
         return
@@ -247,7 +247,6 @@ async def handle_click(event, board: Board, window: pygame.Surface):
             set_message('Not your turn!')
             return
         if is_adjacent(attacker, attacked, board):
-            render(window, board)
             await asyncio.sleep(0.5)
             if attacker.get_team() == attacked.get_team():
                 attacker.swap(attacked)
@@ -366,9 +365,7 @@ board: Board
 window: pygame.Surface
 async def main():
     pygame.init()
-    global window
     global board
-    window = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT + 250))
     board = Board(GRID_WIDTH, GRID_HEIGHT)
 
     player_1_base = Tile(0, 0, Team.Player1)
@@ -381,9 +378,8 @@ async def main():
     global running
     while running:
         await asyncio.gather(
-            *[asyncio.create_task(event_handler(event, board, window))
+            *[asyncio.create_task(event_handler(event, board))
               for event in get_events()])
-        render(window, board)
         await asyncio.sleep(0.01)  # 100 Tick rate
     pygame.quit()
 
