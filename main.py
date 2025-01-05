@@ -140,8 +140,10 @@ class Board:
                 abs(x - (GRID_WIDTH - 1) / 2), abs(y - (GRID_HEIGHT - 1) / 2))
             if x_to_center > 2 and y_to_center > 2:
                 return 1
-            else:
+            elif x_to_center > 1 and y_to_center > 1:
                 return 2
+            else:
+                return 3
         return len(self.get_team_tiles(team))
 
     def get_winner(self):
