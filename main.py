@@ -52,10 +52,11 @@ def get_rect(tile_x: int, tile_y: int, scale: float = 1.0) -> tuple:
             TILE_SIZE * scale)
 
 
-def is_adjacent(tile_1: "Tile", tile_2: "Tile") -> bool:
+def is_adjacent(tile_1: "Tile", tile_2: "Tile", board: "Board") -> bool:
+    attack_range = 2 if len(board.get_team_tiles(tile_1.get_team())) >= 35 else 1
     tile_1_x, tile_1_y = tile_1.get_coords()
     tile_2_x, tile_2_y = tile_2.get_coords()
-    return abs(tile_1_x - tile_2_x) + abs(tile_1_y - tile_2_y) == 1
+    return abs(tile_1_x - tile_2_x) + abs(tile_1_y - tile_2_y) == attack_range
 
 
 def flip_coin():
@@ -232,7 +233,7 @@ async def handle_click(event: pygame.event, board: Board, window: pygame.Surface
             click_queue.clear()
             set_message('Not your turn!')
             return
-        if is_adjacent(attacker, attacked):
+        if is_adjacent(attacker, attacked, board):
             render(window, board)
             await asyncio.sleep(0.5)
             if attacker.get_team() == attacked.get_team():
@@ -338,6 +339,8 @@ click_queue: list = []
 message = 'Start the game by clicking on two tiles! '
 has_attacked = {"Player1": False, "Player2": False}
 
+# TODO display message on swap
+# oyuncunun kosesinde daha guclu olsun
 
 async def main():
     pygame.init()
