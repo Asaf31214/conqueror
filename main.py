@@ -133,7 +133,18 @@ class Board:
                 for y in range(self.grid_height)
                 if self.tiles[x][y].get_team() == team]
 
-    def get_team_power(self, tile: Tile) -> int:
+    @classmethod
+    def _attrition_modifier(cls, tile: Tile) -> float:
+        player1_region = [(x, y) for x in range(GRID_WIDTH // 2) for y in range(GRID_HEIGHT // 2)]
+        player2_region = [(x, y) for x in range(GRID_WIDTH // 2, GRID_WIDTH) for y in
+                          range(GRID_HEIGHT // 2, GRID_HEIGHT)]
+        if tile.get_coords() in player1_region:
+            return 1.6 if tile.get_team() == Team.Player1 else 0.625
+        if tile.get_coords() in player2_region:
+            return 1.6 if tile.get_team() == Team.Player2 else 0.625
+        return 1.0
+
+    def get_team_power(self, tile: Tile) -> float:
         team = tile.get_team()
         if team == Team.Bot:
             x, y = tile.get_coords()
@@ -145,7 +156,7 @@ class Board:
                 return 2
             else:
                 return 3
-        return len(self.get_team_tiles(team))
+        return len(self.get_team_tiles(team)) * self._attrition_modifier(tile)
 
     def get_winner(self):
         team_1_alive = any(self.get_team_tiles(Team.Player1))
@@ -238,6 +249,7 @@ async def handle_click(event: pygame.event, board: Board, window: pygame.Surface
             await asyncio.sleep(0.5)
             if attacker.get_team() == attacked.get_team():
                 attacker.swap(attacked)
+                set_message(f'{attacker.get_team()} swapped tiles {attacker} and {attacked}!')
             else:
                 success = decide_winner(board, attacker, attacked)
                 if not success:
@@ -339,8 +351,6 @@ click_queue: list = []
 message = 'Start the game by clicking on two tiles! '
 has_attacked = {"Player1": False, "Player2": False}
 
-# TODO display message on swap
-# oyuncunun kosesinde daha guclu olsun
 
 async def main():
     pygame.init()
