@@ -83,6 +83,9 @@ class Tile:
         if self._hp <= 10:
             self._hp = 0
 
+    def swap(self, other: "Tile"):
+        self._hp, other._hp = other._hp, self._hp
+
     def switch_team(self, team: str):
         self._hp = MAX_HP
         self._team = team
@@ -213,10 +216,13 @@ async def handle_click(event: pygame.event, board: Board, window: pygame.Surface
         if is_adjacent(attacker, attacked):
             render(window, board)
             await asyncio.sleep(0.5)
-            success = decide_winner(board, attacker, attacked)
-            if not success:
-                attacker, attacked = attacked, attacker
-            attacked.receive_attack(attacker=attacker)
+            if attacker.get_team() == attacked.get_team():
+                attacker.swap(attacked)
+            else:
+                success = decide_winner(board, attacker, attacked)
+                if not success:
+                    attacker, attacked = attacked, attacker
+                attacked.receive_attack(attacker=attacker)
             switch_turn()
         click_queue.clear()
 
@@ -293,7 +299,6 @@ def draw_selections(window: pygame.Surface):
             width=5
         )
 # TODO invalid attackta print atma
-# hucreler arasi heal atma
 # uste total guc gostergesi
 # game over
 
