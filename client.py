@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-import random
 
 import pygame
 import asyncio
@@ -55,17 +54,6 @@ def get_rect(tile_x: int, tile_y: int, scale: float = 1.0) -> tuple:
             TILE_SIZE * scale)
 
 
-def is_adjacent(tile_1: "Tile", tile_2: "Tile") -> bool:
-    attack_range = 2 if len(board.get_team_tiles(tile_1.get_team())) >= 35 else 1
-    tile_1_x, tile_1_y = tile_1.get_coords()
-    tile_2_x, tile_2_y = tile_2.get_coords()
-    return abs(tile_1_x - tile_2_x) + abs(tile_1_y - tile_2_y) <= attack_range
-
-
-def flip_coin():
-    return random.choice([True, False])
-
-
 class Tile:
     def __init__(self, x: int, y: int, team: str = Team.Bot):
         self._x = x
@@ -97,20 +85,15 @@ class Tile:
     def get_team(self):
         return self._team
 
-    def receive_attack(self, attacker: "Tile" = None) -> None:
+    def receive_attack(self, attacker: "Tile" = None) -> str | None:
         damage_modifier = DAMAGE_MODIFIERS[(attacker._team, self._team)]
         damage = (self._hp / 2) * damage_modifier
         self._set_hp(self._hp - damage)
         if self._hp == 0:
-            set_message(new_message=f'{attacker} captured {self}!', append=True)
+            capture_message = f'{attacker} captured {self}!'
             self.switch_team(attacker._team)
+            return capture_message
 
-    def first_attack(self):
-        if self._team != Team.Bot:
-            if not has_attacked[self._team]:
-                has_attacked[self._team] = True
-                return True
-        return False
 
     def __str__(self):
         return f"{self._team} ({self._x}, {self._y})"
@@ -168,50 +151,6 @@ class Board:
             return None
         else:
             return Team.Player1 if team_1_alive else Team.Player2
-
-
-def get_turn():
-    return Team.Player1 if turn else Team.Player2
-
-
-def switch_turn():
-    global turn
-    turn = not turn
-
-
-def decide_winner(attacker: Tile, attacked: Tile):
-    if attacker.first_attack():
-        set_message(f'{attacker} wins the first attack!')
-        return True
-    attacker_team_power = board.get_team_power(attacker)
-    attacked_team_power = board.get_team_power(attacked)
-
-    attacker_hp = attacker.get_hp()
-    attacked_hp = attacked.get_hp()
-
-    attacker_chance = attacker_team_power * attacker_hp
-    attacked_chance = attacked_team_power * attacked_hp
-    winner = random.uniform(0, attacker_chance + attacked_chance) < attacker_chance
-    set_message(
-        f'{attacker} net power: {attacker_chance:.2f}, {attacked} net power: {attacked_chance:.2f}')
-    if winner:
-        set_message(
-            new_message=f'{attacker} wins with {attacker_chance / (attacker_chance + attacked_chance) * 100:.2f}% chance!',
-            append=True)
-    else:
-        set_message(
-            new_message=f'{attacked} wins with {attacked_chance / (attacker_chance + attacked_chance) * 100:.2f}% chance!',
-            append=True)
-    return winner
-
-
-def set_message(new_message: str, append: bool = False):
-    global message
-    if append:
-        message += f'\n{new_message}'
-    else:
-        message = new_message
-    return message
 
 
 # MAIN EVENT HANDLER

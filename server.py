@@ -94,6 +94,7 @@ class Tile:
         if self._hp == 0:
             set_message(new_message=f'{attacker} captured {self}!', append=True)
             self.switch_team(attacker._team)
+            return
 
     def first_attack(self):
         if self._team != Team.Bot:
@@ -243,7 +244,9 @@ async def handle_click(event):
                 success = decide_winner(attacker, attacked)
                 if not success:
                     attacker, attacked = attacked, attacker
-                attacked.receive_attack(attacker=attacker)
+                capture = attacked.receive_attack(attacker=attacker)
+                if capture:
+                    set_message(new_message=capture, append=True)
                 if board.get_winner():
                     set_message(f'Game over! Winner: {board.get_winner()}')
             switch_turn()
