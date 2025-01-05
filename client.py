@@ -55,7 +55,7 @@ def get_rect(tile_x: int, tile_y: int, scale: float = 1.0) -> tuple:
             TILE_SIZE * scale)
 
 
-def is_adjacent(tile_1: "Tile", tile_2: "Tile", board: "Board") -> bool:
+def is_adjacent(tile_1: "Tile", tile_2: "Tile") -> bool:
     attack_range = 2 if len(board.get_team_tiles(tile_1.get_team())) >= 35 else 1
     tile_1_x, tile_1_y = tile_1.get_coords()
     tile_2_x, tile_2_y = tile_2.get_coords()
@@ -179,7 +179,7 @@ def switch_turn():
     turn = not turn
 
 
-def decide_winner(board: Board, attacker: Tile, attacked: Tile):
+def decide_winner(attacker: Tile, attacked: Tile):
     if attacker.first_attack():
         set_message(f'{attacker} wins the first attack!')
         return True
@@ -229,54 +229,17 @@ async def handle_quit():
     global running
     running = False
 
-
-async def handle_click(event: pygame.event, board: Board, window: pygame.Surface):
-    if board.get_winner():
-        set_message(f'Game over! Winner: {board.get_winner()}')
-        return
-    mouse_x, mouse_y = event.pos
-    if mouse_x > WINDOW_WIDTH or mouse_y > WINDOW_HEIGHT:
-        return
-    tile_x, tile_y = mouse_x // TILE_SIZE, mouse_y // TILE_SIZE
-    tile = board.get_tile(tile_x, tile_y)
-    click_queue.append(tile)
-    if len(click_queue) == 2:
-        attacker, attacked = click_queue
-        if attacker == attacked or attacker.get_team() == Team.Bot:
-            click_queue.clear()
-            return
-        if get_turn() != attacker.get_team():
-            click_queue.clear()
-            set_message('Not your turn!')
-            return
-        if is_adjacent(attacker, attacked, board):
-            render(window, board)
-            await asyncio.sleep(0.5)
-            if attacker.get_team() == attacked.get_team():
-                attacker.swap(attacked)
-                set_message(f'{attacker.get_team()} swapped tiles {attacker} and {attacked}!')
-            else:
-                success = decide_winner(board, attacker, attacked)
-                if not success:
-                    attacker, attacked = attacked, attacker
-                attacked.receive_attack(attacker=attacker)
-                if board.get_winner():
-                    set_message(f'Game over! Winner: {board.get_winner()}')
-            switch_turn()
-        click_queue.clear()
-
-
 # DISPLAY RENDERER
-def render(window: pygame.Surface, board: Board):
+def render(window: pygame.Surface):
     window.fill(WHITE)
-    draw_tiles(window, board)
+    draw_tiles(window)
     draw_selections(window)
     draw_lines(window)
-    display_message(window, board)
+    display_message(window)
     pygame.display.flip()
 
 
-def display_message(window: pygame.Surface, board: Board, font_size: int = 30):
+def display_message(window: pygame.Surface, font_size: int = 30):
     font = pygame.font.SysFont('Comic Sans MS', font_size)
     line_height = font.get_height()
 
@@ -327,7 +290,7 @@ def draw_lines(window: pygame.Surface):
         pygame.draw.line(window, GRID_COLOR, (0, y), (WINDOW_WIDTH, y))
 
 
-def draw_tiles(window: pygame.Surface, board: Board):
+def draw_tiles(window: pygame.Surface):
     for tile_x in range(board.grid_width):
         for tile_y in range(board.grid_height):
             tile = board.get_tile(tile_x, tile_y)
@@ -403,7 +366,7 @@ async def main():
             get_data(),
             get_queue()
         )
-        render(window, board)
+        render(window)
         await asyncio.sleep(0.01)  # 100 Tick rate
     pygame.quit()
 
