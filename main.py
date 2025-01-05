@@ -101,7 +101,6 @@ class Tile:
             set_message(new_message=f'{attacker} captured {self}!', append=True)
             self.switch_team(attacker._team)
 
-
     def first_attack(self):
         if self._team != Team.Bot:
             if not has_attacked[self._team]:
@@ -127,34 +126,32 @@ class Board:
     def get_tile(self, x: int, y: int) -> Tile:
         return self.tiles[x][y]
 
+    def get_team_tiles(self, team: str) -> list[Tile]:
+        return [self.tiles[x][y]
+                for x in range(self.grid_width)
+                for y in range(self.grid_height)
+                if self.tiles[x][y].get_team() == team]
+
     def get_team_power(self, tile: Tile) -> int:
         team = tile.get_team()
         if team == Team.Bot:
             x, y = tile.get_coords()
             x_to_center, y_to_center = (
-            abs(x - (GRID_WIDTH - 1) / 2), abs(y - (GRID_HEIGHT - 1) / 2))
+                abs(x - (GRID_WIDTH - 1) / 2), abs(y - (GRID_HEIGHT - 1) / 2))
             if x_to_center > 2 and y_to_center > 2:
                 return 1
             else:
                 return 2
-        return len([self.tiles[x][y]
-                    for x in range(self.grid_width)
-                    for y in range(self.grid_height)
-                    if self.tiles[x][y].get_team() == team])
+        return len(self.get_team_tiles(team))
 
     def get_winner(self):
-        team_1_alive = any([self.tiles[x][y]
-                    for x in range(self.grid_width)
-                    for y in range(self.grid_height)
-                    if self.tiles[x][y].get_team() == Team.Player1])
-        team_2_alive = any([self.tiles[x][y]
-                    for x in range(self.grid_width)
-                    for y in range(self.grid_height)
-                    if self.tiles[x][y].get_team() == Team.Player2])
+        team_1_alive = any(self.get_team_tiles(Team.Player1))
+        team_2_alive = any(self.get_team_tiles(Team.Player2))
         if team_1_alive and team_2_alive:
             return None
         else:
             return Team.Player1 if team_1_alive else Team.Player2
+
 
 def get_turn():
     return Team.Player1 if turn else Team.Player2
@@ -178,14 +175,18 @@ def decide_winner(board: Board, attacker: Tile, attacked: Tile):
     attacker_chance = attacker_team_power * attacker_hp
     attacked_chance = attacked_team_power * attacked_hp
     winner = random.uniform(0, attacker_chance + attacked_chance) < attacker_chance
-    set_message(f'{attacker} net power: {attacker_chance}, {attacked} net power: {attacked_chance}')
+    set_message(
+        f'{attacker} net power: {attacker_chance}, {attacked} net power: {attacked_chance}')
     if winner:
         set_message(
-            new_message=f'{attacker} wins with {attacker_chance / (attacker_chance + attacked_chance) * 100:.2f}% chance!', append=True)
+            new_message=f'{attacker} wins with {attacker_chance / (attacker_chance + attacked_chance) * 100:.2f}% chance!',
+            append=True)
     else:
         set_message(
-            new_message=f'{attacked} wins with {attacked_chance / (attacker_chance + attacked_chance) * 100:.2f}% chance!', append=True)
+            new_message=f'{attacked} wins with {attacked_chance / (attacker_chance + attacked_chance) * 100:.2f}% chance!',
+            append=True)
     return winner
+
 
 def set_message(new_message: str, append: bool = False):
     global message
@@ -194,7 +195,6 @@ def set_message(new_message: str, append: bool = False):
     else:
         message = new_message
     return message
-
 
 
 # MAIN EVENT HANDLER
@@ -255,6 +255,7 @@ def render(window: pygame.Surface, board: Board):
     display_message(window)
     pygame.display.flip()
 
+
 def display_message(window: pygame.Surface, font_size: int = 30):
     font = pygame.font.SysFont('Comic Sans MS', font_size)
     line_height = font.get_height()
@@ -274,7 +275,7 @@ def display_message(window: pygame.Surface, font_size: int = 30):
         current_line = ""
         words = line.split(' ')
         for word in words:
-            if font.size(current_line + word + " ")[0] > WINDOW_WIDTH-20:
+            if font.size(current_line + word + " ")[0] > WINDOW_WIDTH - 20:
                 lines.append(current_line)
                 current_line = word + " "
             else:
@@ -285,7 +286,7 @@ def display_message(window: pygame.Surface, font_size: int = 30):
     for i, line in enumerate(lines):
         text_surface = font.render(line.strip(), True, BLACK)
         x_position = WINDOW_WIDTH // 2 - text_surface.get_width() // 2
-        y_position = WINDOW_HEIGHT + 15 + (i+1) * line_height
+        y_position = WINDOW_HEIGHT + 15 + (i + 1) * line_height
         window.blit(text_surface, (x_position, y_position))
 
 
@@ -317,9 +318,10 @@ def draw_selections(window: pygame.Surface):
             rect=get_rect(*tile.get_coords()),
             width=5
         )
+
+
 # TODO
 # uste total guc gostergesi
-# game over
 
 running: bool = True
 turn = True
