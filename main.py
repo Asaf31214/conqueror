@@ -53,6 +53,7 @@ def get_rect(tile_x: int, tile_y: int, scale: float = 1.0) -> tuple:
 
 
 def is_adjacent(tile_1: "Tile", tile_2: "Tile") -> bool:
+    return True
     tile_1_x, tile_1_y = tile_1.get_coords()
     tile_2_x, tile_2_y = tile_2.get_coords()
     return abs(tile_1_x - tile_2_x) + abs(tile_1_y - tile_2_y) == 1
@@ -142,6 +143,19 @@ class Board:
                     for y in range(self.grid_height)
                     if self.tiles[x][y].get_team() == team])
 
+    def get_winner(self):
+        team_1_alive = any([self.tiles[x][y]
+                    for x in range(self.grid_width)
+                    for y in range(self.grid_height)
+                    if self.tiles[x][y].get_team() == Team.Player1])
+        team_2_alive = any([self.tiles[x][y]
+                    for x in range(self.grid_width)
+                    for y in range(self.grid_height)
+                    if self.tiles[x][y].get_team() == Team.Player2])
+        if team_1_alive and team_2_alive:
+            return None
+        else:
+            return Team.Player1 if team_1_alive else Team.Player2
 
 def get_turn():
     return Team.Player1 if turn else Team.Player2
@@ -183,6 +197,7 @@ def set_message(new_message: str, append: bool = False):
     return message
 
 
+
 # MAIN EVENT HANDLER
 async def event_handler(event: pygame.event, board: Board, window: pygame.Surface):
     if event.type == pygame.QUIT:
@@ -198,6 +213,9 @@ async def handle_quit():
 
 
 async def handle_click(event: pygame.event, board: Board, window: pygame.Surface):
+    if board.get_winner():
+        set_message(f'Game over! Winner: {board.get_winner()}')
+        return
     mouse_x, mouse_y = event.pos
     if mouse_x > WINDOW_WIDTH or mouse_y > WINDOW_HEIGHT:
         return
@@ -223,6 +241,8 @@ async def handle_click(event: pygame.event, board: Board, window: pygame.Surface
                 if not success:
                     attacker, attacked = attacked, attacker
                 attacked.receive_attack(attacker=attacker)
+                if board.get_winner():
+                    set_message(f'Game over! Winner: {board.get_winner()}')
             switch_turn()
         click_queue.clear()
 
@@ -298,7 +318,7 @@ def draw_selections(window: pygame.Surface):
             rect=get_rect(*tile.get_coords()),
             width=5
         )
-# TODO invalid attackta print atma
+# TODO
 # uste total guc gostergesi
 # game over
 
