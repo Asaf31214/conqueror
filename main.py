@@ -53,7 +53,6 @@ def get_rect(tile_x: int, tile_y: int, scale: float = 1.0) -> tuple:
 
 
 def is_adjacent(tile_1: "Tile", tile_2: "Tile") -> bool:
-    return True
     tile_1_x, tile_1_y = tile_1.get_coords()
     tile_2_x, tile_2_y = tile_2.get_coords()
     return abs(tile_1_x - tile_2_x) + abs(tile_1_y - tile_2_y) == 1
