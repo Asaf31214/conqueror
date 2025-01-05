@@ -56,7 +56,7 @@ def is_adjacent(tile_1: "Tile", tile_2: "Tile", board: "Board") -> bool:
     attack_range = 2 if len(board.get_team_tiles(tile_1.get_team())) >= 35 else 1
     tile_1_x, tile_1_y = tile_1.get_coords()
     tile_2_x, tile_2_y = tile_2.get_coords()
-    return abs(tile_1_x - tile_2_x) + abs(tile_1_y - tile_2_y) == attack_range
+    return abs(tile_1_x - tile_2_x) + abs(tile_1_y - tile_2_y) <= attack_range
 
 
 def flip_coin():
@@ -190,7 +190,7 @@ def decide_winner(board: Board, attacker: Tile, attacked: Tile):
     attacked_chance = attacked_team_power * attacked_hp
     winner = random.uniform(0, attacker_chance + attacked_chance) < attacker_chance
     set_message(
-        f'{attacker} net power: {attacker_chance}, {attacked} net power: {attacked_chance}')
+        f'{attacker} net power: {attacker_chance:.2f}, {attacked} net power: {attacked_chance:.2f}')
     if winner:
         set_message(
             new_message=f'{attacker} wins with {attacker_chance / (attacker_chance + attacked_chance) * 100:.2f}% chance!',
