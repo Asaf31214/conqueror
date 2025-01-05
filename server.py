@@ -6,6 +6,7 @@ import asyncio
 import pickle
 
 from fastapi import FastAPI, Request
+from fastapi.responses import Response
 import uvicorn
 
 WINDOW_WIDTH, WINDOW_HEIGHT = 600, 600
@@ -217,10 +218,7 @@ def set_message(new_message: str, append: bool = False):
 
 # MAIN EVENT HANDLER
 async def event_handler(event: pygame.event, board: Board, window: pygame.Surface):
-    if event.type == pygame.QUIT:
-        await handle_quit()
-    elif event.type == pygame.MOUSEBUTTONDOWN:
-        await handle_click(event, board, window)
+    await handle_click(event, board, window)
 
 
 # Event handler functions
@@ -229,11 +227,11 @@ async def handle_quit():
     running = False
 
 
-async def handle_click(event: pygame.event, board: Board, window: pygame.Surface):
+async def handle_click(event, board: Board, window: pygame.Surface):
     if board.get_winner():
         set_message(f'Game over! Winner: {board.get_winner()}')
         return
-    mouse_x, mouse_y = event.pos
+    mouse_x, mouse_y = event
     if mouse_x > WINDOW_WIDTH or mouse_y > WINDOW_HEIGHT:
         return
     tile_x, tile_y = mouse_x // TILE_SIZE, mouse_y // TILE_SIZE
@@ -364,9 +362,12 @@ def get_events():
     server_events.clear()
     return events
 
-
+board: Board
+window: pygame.Surface
 async def main():
     pygame.init()
+    global window
+    global board
     window = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT + 250))
     board = Board(GRID_WIDTH, GRID_HEIGHT)
 
@@ -381,7 +382,7 @@ async def main():
     while running:
         await asyncio.gather(
             *[asyncio.create_task(event_handler(event, board, window))
-              for event in pygame.event.get()])
+              for event in get_events()])
         render(window, board)
         await asyncio.sleep(0.01)  # 100 Tick rate
     pygame.quit()
@@ -393,14 +394,29 @@ async def server():
     @app.post("/event")
     async def receive_event(request: Request):
         global server_events
-        data = await request.body()
-        event = pickle.loads(data)
+        data = await request.json()
+        event = data['mouse_pos']
         server_events.append(event)
-        return {"message": "Event received"}
+        return
 
-    @app.get("/health_check")
-    async def health():
-        return {"message": "Health check successful"}
+    @app.get("/board")
+    async def get_board():
+        global board
+        pickled_board = pickle.dumps(board)
+        return Response(content=pickled_board, media_type="application/octet-stream")
+
+    @app.get("/queue")
+    async def get_queue():
+        global click_queue
+        pickled_queue = pickle.dumps(click_queue)
+        return Response(content=pickled_queue, media_type="application/octet-stream")
+
+    @app.get("/data")
+    async def get_data():
+        global message
+        global has_attacked
+        global turn
+        return {"message": message, "turn": turn, "has_attacked": has_attacked}
 
     config = uvicorn.Config(app, host="127.0.0.1", port=8000)
     server_ = uvicorn.Server(config)
